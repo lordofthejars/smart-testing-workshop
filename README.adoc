@@ -1,0 +1,91 @@
+= Smart Testing
+:numbered:
+:sectlink:
+:sectanchors:
+:sectid:
+:source-language: java
+:source-highlighter: coderay
+:sectnums:
+:icons: font
+:toc: left
+
+*We know which tests you want to run.*
+
+We all know that as the project evolves we keep adding more and more tests to ship our products confidently. This however has
+an impact on the build time and thus we waste time waiting for the most important question to be answered - "Did I break anything with my changes?".
+
+Let it be your local development or a CI server - what if you could know this as soon as possible?
+
+We created *Smart Testing* to give you the fastest possible feedback loop when it comes to executing your tests.
+
+== Preparation of the Environment
+
+First thing you need to do to do this workshop if to have installed on your machine next software:
+
+* `git` client to clone project example.
+* `Java 8` is the minimum Java version required.
+* `Maven` installed and in `PATH` directory. We recommend version `3.5.0` of `Maven` but any `3.3.X` version works as well.
+Although it has not been tested any other prior Maven version of `3.X` branch should work as well.  
+
+== Building the project
+=== Cloning the example project and running the build
+
+Open a terminal and just clone `SparkJava` repository: 
+
+....
+git clone https://github.com/perwendel/spark.git 
+....
+
+Then just go inside `spark` directory and run the tests with `Maven`.
+
+....
+mvn clean test
+....
+
+Then the build is started and after ~30 seconds the build succeed.
+
+.Output
+....
+
+INFO] Scanning for projects...
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] Building Spark 2.6.1-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO]
+[INFO] --- maven-clean-plugin:2.5:clean (default-clean) @ spark-core ---
+[INFO] Deleting /Users/asotobu/git/spark/target
+[INFO]
+[INFO] --- maven-enforcer-plugin:1.4:enforce (enforce-maven) @ spark-core ---
+[INFO]
+[INFO] --- maven-enforcer-plugin:1.4:enforce (enforce-java) @ spark-core ---
+
+...
+
+Running spark.utils.CollectionUtilsTest
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 sec - in spark.utils.CollectionUtilsTest
+Running spark.utils.MimeParseTest
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 sec - in spark.utils.MimeParseTest
+Running spark.utils.ObjectUtilsTest
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 sec - in spark.utils.ObjectUtilsTest
+Running spark.utils.SparkUtilsTest
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 sec - in spark.utils.SparkUtilsTest
+
+Results :
+
+Tests run: 293, Failures: 0, Errors: 0, Skipped: 0
+
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 31.929 s
+[INFO] Finished at: 2017-09-13T22:51:18+02:00
+[INFO] Final Memory: 22M/307M
+[INFO] ------------------------------------------------------------------------
+....
+
+=== Adding a new test case
+
+At this point there is nothing wrong 
+
+
