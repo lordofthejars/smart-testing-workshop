@@ -35,7 +35,7 @@ Although it has not been tested it should still be possible to run with any vers
 Open a terminal and just clone `AssertJ` repository:
 
 ....
-git clone hhttps://github.com/joel-costigliola/assertj-core.git
+git clone https://github.com/joel-costigliola/assertj-core.git
 ....
 
 Then just go inside `assertj-core` directory and run the tests with `Maven`.
@@ -351,10 +351,102 @@ You've learnt:
 
 * [*] `new` and `changed` strategies uses only Git local changes to detect new and modified tests.
 
-=== Affected strategy
+=== Modifying Bussines code
 
 So far we've seen how `new` and `changed` strategies works with tests.
 Of course this works in cases where you only create or modify a new test.
 But what's happening if what you are modifying is a business class instead of a test?
 
+Open `org.assertj.core.extractor.ByNameMultipleExtractor` class and modify next method
+
+[source, java]
+.src/main/java/org/assertj/core/extractor/ByNameMultipleExtractor.java
+----
+private List<Object> extractValues(T input, List<Extractor<T, Object>> singleExtractors) {
+    List<Object> values = new ArrayList<>();
+
+    for (Extractor<T, Object> extractor : singleExtractors) {
+      values.add(extractor.extract(input));
+    }
+    return values;
+  }
+----
+
+to add a `reverse` call:
+
+[source, java]
+.src/main/java/org/assertj/core/extractor/ByNameMultipleExtractor.java
+----
+private List<Object> extractValues(T input, List<Extractor<T, Object>> singleExtractors) {
+    List<Object> values = new ArrayList<>();
+
+    for (Extractor<T, Object> extractor : singleExtractors) {
+      values.add(extractor.extract(input));
+    }
+    Collections.reverse(values);
+    return values;
+  }
+----
+
+And now do the same you did before by running Smart Testing with `new` and `changed` strategy.
+
+....
+mvn clean test -Dsmart.testing="new, changed"
+....
+
+And the output is:
+
+.Output
+....
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[WARNING] Corrupted stdin stream in forked JVM 1. See the dump file /Users/alex/git/assertj-core/target/surefire-reports/2017-09-19T16-46-53_677-jvmRun1.dumpstream
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0
+....
+
+So why there are not tests run?
+The answer is that `new` and `changed` strategies just look for *tests* that are new or modified, but in this case we've not modified any test, but business code.
+
+:numbered!:
+=== icon:check-square-o[] Check point
+:numbered:
+
+You've learnt:
+
+* [*] `new` and `changed` strategies detect only test changes, not business code changes.
+
+=== Affected strategy
+
 Let's see `affected` strategy that deals with this use case.
+
+Now run next command, which configures `affected` strategy.
+
+....
+mvn clean test -Dsmart.testing="affected"
+....
+
+and the output is:
+
+.Output
+....
+INFO]
+[ERROR] Tests run: 9921, Failures: 23, Errors: 0, Skipped: 69
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+....
+
+Notice that now some tests has been run, not all of them since the whole project has _10887_ tests.
+
+==== Explanation of `affected` strategy
+
+`Affected` strategy uses a different approach to choose what are the important tests to run.
+This strategy also relies on SCM information but in this case it retrieves any new or modified business class.
+
+When this strategy gets all changes then inspect all tests of current project checking which ones imports these classes.
+If the test exercises a business class that has been modified, we treat it as important so it will be executed earlier in the test plan.
