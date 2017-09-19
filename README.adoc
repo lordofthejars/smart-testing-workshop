@@ -8,6 +8,7 @@
 :sectnums:
 :icons: font
 :toc: left
+:smart-testing-version: 0.0.1
 
 *We know which tests you want to run.*
 
@@ -25,67 +26,335 @@ First thing you need to do to do this workshop if to have installed on your mach
 * `git` client to clone project example.
 * `Java 8` is the minimum Java version required.
 * `Maven` installed and in `PATH` directory. We recommend version `3.5.0` of `Maven` but any `3.3.X` version works as well.
-Although it has not been tested any other prior Maven version of `3.X` branch should work as well.  
+Although it has not been tested it should still be possible to run with any version of `3.X`.
+* `Jenkins 2.73.1` installed with Jenkins Pipeline (which comes with suggested plugins) and optionally Blue Ocean (https://jenkins.io/projects/blueocean/).
 
 == Building the project
 === Cloning the example project and running the build
 
-Open a terminal and just clone `SparkJava` repository: 
+Open a terminal and just clone `AssertJ` repository:
 
 ....
-git clone https://github.com/perwendel/spark.git 
+git clone hhttps://github.com/joel-costigliola/assertj-core.git
 ....
 
-Then just go inside `spark` directory and run the tests with `Maven`.
+Then just go inside `assertj-core` directory and run the tests with `Maven`.
 
 ....
 mvn clean test
 ....
 
-Then the build is started and after ~30 seconds the build succeed.
+Then the build is started and after ~50 seconds and executing 10887 test cases, the build succeed.
 
 .Output
 ....
-
-INFO] Scanning for projects...
-[INFO]
-[INFO] ------------------------------------------------------------------------
-[INFO] Building Spark 2.6.1-SNAPSHOT
-[INFO] ------------------------------------------------------------------------
-[INFO]
-[INFO] --- maven-clean-plugin:2.5:clean (default-clean) @ spark-core ---
-[INFO] Deleting /Users/asotobu/git/spark/target
-[INFO]
-[INFO] --- maven-enforcer-plugin:1.4:enforce (enforce-maven) @ spark-core ---
-[INFO]
-[INFO] --- maven-enforcer-plugin:1.4:enforce (enforce-java) @ spark-core ---
-
 ...
 
-Running spark.utils.CollectionUtilsTest
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 sec - in spark.utils.CollectionUtilsTest
-Running spark.utils.MimeParseTest
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 sec - in spark.utils.MimeParseTest
-Running spark.utils.ObjectUtilsTest
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 sec - in spark.utils.ObjectUtilsTest
-Running spark.utils.SparkUtilsTest
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 sec - in spark.utils.SparkUtilsTest
-
-Results :
-
-Tests run: 293, Failures: 0, Errors: 0, Skipped: 0
-
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in org.example.test.AutoClosableSoftAssertionsLineNumberTest
+[INFO] Running org.example.test.BDDSoftAssertionsLineNumberTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in org.example.test.BDDSoftAssertionsLineNumberTest
+[INFO] Running org.example.test.SoftAssertionsLineNumberTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s - in org.example.test.SoftAssertionsLineNumberTest
+[INFO]
+[INFO] Results:
+[INFO]
+[WARNING] Tests run: 10887, Failures: 0, Errors: 0, Skipped: 91
+[INFO]
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time: 31.929 s
-[INFO] Finished at: 2017-09-13T22:51:18+02:00
-[INFO] Final Memory: 22M/307M
+[INFO] Total time: 55.718 s
+[INFO] Finished at: 2017-09-15T19:25:48+02:00
+[INFO] Final Memory: 36M/992M
 [INFO] ------------------------------------------------------------------------
 ....
 
 === Adding a new test case
 
-At this point there is nothing wrong 
+Now let's add a new test case.
+Open `org.assertj.core.util.Strings_join_Test` and add next content:
 
+[source, java]
+.src/main/java/org/assertj/core/util/Strings_join_Test.java
+----
+@Test
+public void should_join_using_iterable_delimiter() {
+  assertThat(Strings.join(newArrayList("Luke", "Leia", "Han")).with("|")).isEqualTo("Leia|Han|Luke");
+}
+----
 
+And then just run again test goal again:
+
+....
+mvn clean test
+....
+
+Then the build is started and after waiting ~50 seconds the build fails.
+
+.Output
+....
+...
+
+INFO] Running org.assertj.core.util.Strings_join_Test
+[ERROR] Tests run: 6, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.002 s <<< FAILURE! - in org.assertj.core.util.Strings_join_Test
+[ERROR] should_join_using_iterable_delimiter(org.assertj.core.util.Strings_join_Test)  Time elapsed: 0.001 s  <<< FAILURE!
+org.junit.ComparisonFailure: expected:<"L[eia|Han|Luke]"> but was:<"L[uke|Leia|Han]">
+	at org.assertj.core.util.Strings_join_Test.should_join_using_iterable_delimiter(Strings_join_Test.java:61)
+
+[INFO] Running org.assertj.core.util.Strings_quoteObject_Test
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in org.assertj.core.util.Strings_quoteObject_Test
+[INFO] Running org.assertj.core.util.Strings_quoteString_Test
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in org.assertj.core.util.Strings_quoteString_Test
+[INFO] Running org.assertj.core.util.Throwables_appendCurrentThreadStackTraceToThrowable_Test
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s - in org.assertj.core.util.Throwables_appendCurrentThreadStackTraceToThrowable_Test
+[INFO] Running org.assertj.core.util.Throwables_getRootCause_Test
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in org.assertj.core.util.Throwables_getRootCause_Test
+[INFO] Running org.assertj.core.util.Throwables_getStackTrace_Test
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.047 s - in org.assertj.core.util.Throwables_getStackTrace_Test
+[INFO] Running org.assertj.core.util.Throwables_removeAssertJElementFromStackTrace_Test
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in org.assertj.core.util.Throwables_removeAssertJElementFromStackTrace_Test
+[INFO] Running org.assertj.core.util.URLs_contentOf_Test
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s - in org.assertj.core.util.URLs_contentOf_Test
+[INFO] Running org.assertj.core.util.URLs_linesOf_Test
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s - in org.assertj.core.util.URLs_linesOf_Test
+[INFO] Running org.assertj.core.util.xml.XmlStringPrettyFormatter_prettyFormat_Test
+[Fatal Error] :1:139: The element type "channel" must be terminated by the matching end-tag "</channel>".
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.023 s - in org.assertj.core.util.xml.XmlStringPrettyFormatter_prettyFormat_Test
+[INFO] Running org.example.custom.CustomAsserts_filter_stacktrace_Test
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s - in org.example.custom.CustomAsserts_filter_stacktrace_Test
+[INFO] Running org.example.test.AutoClosableSoftAssertionsLineNumberTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s - in org.example.test.AutoClosableSoftAssertionsLineNumberTest
+[INFO] Running org.example.test.BDDSoftAssertionsLineNumberTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in org.example.test.BDDSoftAssertionsLineNumberTest
+[INFO] Running org.example.test.SoftAssertionsLineNumberTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s - in org.example.test.SoftAssertionsLineNumberTest
+[INFO]
+[INFO] Results:
+[INFO]
+[ERROR] Failures:
+[ERROR]   Strings_join_Test.should_join_using_iterable_delimiter:61 expected:<"L[eia|Han|Luke]"> but was:<"L[uke|Leia|Han]">
+[INFO]
+[ERROR] Tests run: 10888, Failures: 1, Errors: 0, Skipped: 91
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 56.700 s
+[INFO] Finished at: 2017-09-15T19:36:44+02:00
+[INFO] Final Memory: 39M/1066M
+[INFO] ------------------------------------------------------------------------
+....
+
+Now it is only about 50 seconds but think about in bigger projects were instead of seconds you need to wait minutes.
+So if we know that we have just added a new test case, why not running the test class containing it, instead of running all tests?
+
+This is exactly what *Smart Testing* does among other features.
+
+:numbered!:
+=== icon:check-square-o[] Check point
+:numbered:
+
+You've learnt:
+
+* [*] Need to wait until build finishes to get failures.
+* [*] Sometimes you already know which tests should be run.
+
+== Smart Testing
+=== Installing Smart Testing
+
+Smart Testing is a Maven extension, not a Maven plugin, and this means that using it is slightly different than registering a plugin.
+
+First thing to do is create a `.mvn` directory at root folder if does not exists.
+Since AssertJ already contains this directory, you can skip this step.
+
+....
+mkdir .mvn
+....
+
+Inside this `.mvn` directory create an `extensions.xml` file with next content:
+
+[source, xml, subs="attributes+"]
+.${project_root}/.mvn/extensions.xml
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<extensions>
+  <extension>
+    <groupId>org.arquillian.smart.testing</groupId>
+    <artifactId>maven-lifecycle-extension</artifactId>
+    <version>{smart-testing-version}</version>
+  </extension>
+</extensions>
+----
+
+Then you need to update/force the surefire version.
+For this case we are going to force to use the latest one `2.20`.
+
+So let's open `pom.xml` file and replace:
+
+[source, xml]
+.pom.xml
+----
+<plugin>
+  <artifactId>maven-surefire-plugin</artifactId>
+  <configuration>
+    <argLine>${argLine}</argLine>
+  </configuration>
+</plugin>
+----
+
+to:
+
+[source, xml]
+.pom.xml
+----
+<plugin>
+  <artifactId>maven-surefire-plugin</artifactId>
+  <version>2.20</version>
+  <configuration>
+    <argLine>${argLine}</argLine>
+  </configuration>
+</plugin>
+----
+
+IMPORTANT: Notice that in this case we are forcing which version of `surefire` plugin must be used.
+
+=== Running Smart Testing
+
+Now it is time to run build but with *Smart Testing* enabled.
+
+....
+mvn clean test -Dsmart.testing="new, changed"
+....
+
+And now the build still fails but it only executes the modified test instead of all tests.
+
+.Output
+....
+INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[WARNING] Corrupted stdin stream in forked JVM 1. See the dump file /Users/alex/git/assertj-core/target/surefire-reports/2017-09-18T12-23-11_531-jvmRun1.dumpstream
+[INFO] Running org.assertj.core.util.Strings_join_Test
+[ERROR] Tests run: 6, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.09 s <<< FAILURE! - in org.assertj.core.util.Strings_join_Test
+[ERROR] should_join_using_iterable_delimiter(org.assertj.core.util.Strings_join_Test)  Time elapsed: 0.014 s  <<< FAILURE!
+org.junit.ComparisonFailure: expected:<"L[eia|Han|Luke]"> but was:<"L[uke|Leia|Han]">
+
+[INFO]
+[INFO] Results:
+[INFO]
+[ERROR] Failures:
+[ERROR]   Strings_join_Test.should_join_using_iterable_delimiter expected:<"L[eia|Han|Luke]"> but was:<"L[uke|Leia|Han]">
+[INFO]
+[ERROR] Tests run: 6, Failures: 1, Errors: 0, Skipped: 0
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+....
+
+==== Explanation of `smart.testing` property
+
+But how do we know which tests are important and which ones not?
+In previous example the important tests are those *tests* that has been added or modified in Git repo as local changes.
+
+There are several strategies that you can choose from which determine what are the *important* tests.
+Currently we have following strategies in place: `new`, `changed`, `affected` and `failed`.
+
+To set them you need to set Java system property `smart.testing` to one or more strategies in comma-separated value form.
+
+Currently next strategies has been used:
+
+new strategy:: uses SCM information (currently only Git is supported) to detect new tests and treat them as important tests.
+changed strategy:: is like `new` strategy, but it uses only tests that are modified.
+
+In next sections we are going to see other strategies.
+
+:numbered!:
+=== icon:check-square-o[] Check point
+:numbered:
+
+You've learnt:
+
+* [*] Smart Testing can run only new or modified tests
+* [*] There are several strategies to choose from
+
+=== Fixing the build
+
+Let's fix the failing test, by setting the correct order in expected list:
+
+[source, java]
+.src/main/java/org/assertj/core/util/Strings_join_Test.java
+----
+@Test
+public void should_join_using_iterable_delimiter() {
+  assertThat(Strings.join(newArrayList("Luke", "Han", "Leia"))
+            .with("|")).isEqualTo("Luke|Han|Leia");
+}
+----
+
+Obviously now if you run again Smart Testing you'll get a build passed as result:
+
+....
+mvn clean test -Dsmart.testing="new, changed"
+....
+
+.Output
+....
+[INFO] Running org.assertj.core.util.Strings_join_Test
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.106 s - in org.assertj.core.util.Strings_join_Test
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+....
+
+Now let's commit all changes:
+
+....
+git add .
+git commit -m "Adds new test case"
+....
+
+And run again the build:
+
+....
+mvn clean test -Dsmart.testing="new, changed"
+....
+
+And the output is:
+
+.Output
+....
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[WARNING] Corrupted stdin stream in forked JVM 1. See the dump file /Users/alex/git/assertj-core/target/surefire-reports/2017-09-19T11-58-31_648-jvmRun1.dumpstream
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0
+....
+
+Notice that no tests are executed.
+The answer of this behaviour is that `new` and `changed` strategies in Smart Testing check by default local changes and not committed changes.
+We'll learn in next sections how to change this.
+
+:numbered!:
+=== icon:check-square-o[] Check point
+:numbered:
+
+You've learnt:
+
+* [*] `new` and `changed` strategies uses only Git local changes to detect new and modified tests.
+
+=== Affected strategy
+
+So far we've seen how `new` and `changed` strategies works with tests.
+Of course this works in cases where you only create or modify a new test.
+But what's happening if what you are modifying is a business class instead of a test?
+
+Let's see `affected` strategy that deals with this use case.
