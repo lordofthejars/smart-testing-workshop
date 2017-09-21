@@ -351,7 +351,7 @@ You've learnt:
 
 * [*] `new` and `changed` strategies uses only Git local changes to detect new and modified tests.
 
-=== Modifying Bussines code
+=== Modifying business code
 
 So far we've seen how `new` and `changed` strategies works with tests.
 Of course this works in cases where you only create or modify a new test.
@@ -419,7 +419,7 @@ You've learnt:
 
 * [*] `new` and `changed` strategies detect only test changes, not business code changes.
 
-=== Affected strategy
+=== `affected` strategy
 
 Let's see `affected` strategy that deals with this use case.
 
@@ -441,7 +441,7 @@ INFO]
 [INFO] ------------------------------------------------------------------------
 ....
 
-Notice that now some tests has been run, not all of them since the whole project has _10887_ tests.
+Notice that now some tests has been run, not all of them since the whole project has _10887_ tests but still a lot.
 
 ==== Explanation of `affected` strategy
 
@@ -450,3 +450,57 @@ This strategy also relies on SCM information but in this case it retrieves any n
 
 When this strategy gets all changes then inspect all tests of current project checking which ones imports these classes.
 If the test exercises a business class that has been modified, we treat it as important so it will be executed earlier in the test plan.
+
+But `affected` strategy not just get direct imports, but also the applies a transitivity to these imports.
+Suppose we have `ATest.java` which imports `A.java`.
+At the same time `A.java` imports `B.java` (ATest -> A -> B). If `B.java` is modified, then `ATest.java is considered an important test too.
+
+And for this reason so many tests are considered important for a single change.
+The main problem is that almost all tests indirectly depends on one class that depends on `org.assertj.core.extractor.ByNameMultipleExtractor`, so any change that occurs on that class it means running all of these tests.
+
+Of course this depends on your test strategy and how your code is coupled, but in most cases you are not going to find this problem.
+
+==== Prune search tree
+
+In Smart Testing we support three ways to control transitivity:
+
+* inclusions
+* exclusions
+* disable transitivity
+
+For this case we are going to disable transitivity, so only tests that directly imports `org.assertj.core.extractor.ByNameMultipleExtractor` are run.
+
+Run next command, with `affected` strategy and disabling transitivity.
+
+....
+mvn -Dsmart.testing="affected" -Dsmart.testing.affected.transitivity=false clean test
+....
+
+and the output is:
+
+.Output
+....
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[WARNING] Corrupted stdin stream in forked JVM 1. See the dump file /Users/alex/git/assertj-core/target/surefire-reports/2017-09-21T16-03-56_987-jvmRun1.dumpstream
+[INFO] Running org.assertj.core.extractor.ByNameMultipleExtractorTest
+[ERROR] Tests run: 7, Failures: 3, Errors: 0, Skipped: 0, Time elapsed: 0.166 s <<< FAILURE! - in org.assertj.core.extractor.ByNameMultipleExtractorTest
+....
+
+In this concrete example to make `selective` mode useful we have disabled transitivity.
+In other cases (usually when using external libraries) you will like to exclude these packages or just including current project package.
+But of course it will depend on how you structure your project that you might need no prune or a concrete prune strategy.
+
+:numbered!:
+=== icon:check-square-o[] Check point
+:numbered:
+
+You've learnt:
+
+* [*] `affected` strategy is used to get changes from business code and detect tests related to this part
+* [*] `affected` strategy uses _imports_ to get which tests to execute
+* [*] It scans transitivitly all imports by default (excluding `java` package)
+* [*] You can prune import graph by using _inclusions_, _exclusions_ or disabling it.
+
+=== `ordering` mode
