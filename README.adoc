@@ -8,6 +8,9 @@
 :sectnums:
 :icons: font
 :toc: left
+:imagesdir: images
+:figure-caption!:
+:data-uri:
 :smart-testing-version: 0.0.1
 
 *We know which tests you want to run.*
@@ -720,6 +723,8 @@ In case of development machine, you’ll probably want to build simply against t
 
 Let’s see how to configure Smart Testing in Jenkins Pipeline.
 
+IMPORTANT: Jenkins should be started at port 9090. You can set this by starting Jenkins with `JENKINS_HOME=j java -jar jenkins.war --httpPort=9090`
+
 === Jenkinsfile
 
 `Jenkinsfile` is the _de-facto_ file name where you defines the pipeline.
@@ -739,7 +744,7 @@ pipeline {
       steps {
         script {
           def scmVars = checkout scm
-          sh "mvn -Dsmart.testing='new, affected' -Dsmart.testing.mode=ordering -Dscm.range.head=${scmVars.GIT_COMMIT} -Dscm.range.tail=${scmVars.GIT_PREVIOUS_COMMIT} test"
+          sh "mvn -Dsmart.testing='new, changed' -Dsmart.testing.mode=ordering -Dscm.range.head=${scmVars.GIT_COMMIT} -Dscm.range.tail=${scmVars.GIT_PREVIOUS_COMMIT} test"
         }
       }
       post {
@@ -751,3 +756,100 @@ pipeline {
   }
 }
 ----
+
+After that just commit `Jenkinsfile`:
+
+....
+git add .
+git commit -m "Adds Jenkinsfile"
+....
+
+Then open Jenkins console http://localhost:9090/blue/organizations/jenkins/pipelines and create a new Jenkins Pipeline job.
+
+On welcome screen just push `New Pipeline` button.
+
+image::new.png[]
+
+Select `Git` as storage repository
+
+image::scm.png[]
+
+And as repository URL use local directory where you've cloned the project (i.e `file:///Users/alex/git/vertxcalculator`)
+
+image::register.png[]
+
+Finally push `Create Pipeline` button.
+
+After some seconds, you'll notice that the build is failing.
+This is because first time you run a job on Jenkins, the `scmVars` does not contains all information regarding previous commits.
+
+image::error.png[]
+
+==== Create a new test
+
+Now, we just need to create a new test and commit.
+Let's add a new test case on `org.superbiz.CalculatorTest` class.
+
+[source, java]
+.src/main/java/org/superbiz/CalculatorTest.java
+----
+@Test
+public void should_multiply_two_negatives_values_and_be_positive_result() {
+
+  // given
+  Calculator calculator = new Calculator();
+
+  // when
+  final int result = calculator.multiply(-1, -3);
+
+  // then
+  assertThat(result).isEqualTo(3);
+
+}
+----
+
+Commit the test:
+
+....
+git add .
+git commit -m "Adds new test case"
+....
+
+After that, go to Jenkins, select `Branches` tab and push the icon:play-circle-o[] icon.
+Then the build reruns and you'll get a correct run.
+
+image:rerun.png[]
+
+WARNING: Sometimes Jenkins sets as `null` previous and current commit. For example if you replay (not play) the build.
+
+==== Explanation of `scm` range
+
+`new`, `changed` and `affected` strategies use by default local changes.
+In case of development machine, probably it is fine, but in case of CI/CD environment, probably the changes you want to take into consideration are those between the commits you are going to run the build.
+
+For this reason there are `scm.range.head` and `scm.range.tail` system properties used to set the range of commits you want to inspect for new tests.
+The values can be commit ids or using `HEAD` notation.
+For example: `-Dscm.range.head=HEAD` `-Dscm.range.tail=HEAD~`.
+By default if not specified, default value is HEAD.
+
+:numbered!:
+=== icon:check-square-o[] Check point
+:numbered:
+
+You've learnt:
+
+* [*] You can set SCM range where Smart Testing should inspect (`new`, `changed` and `affected` strategies)
+* [*] Jenkins provides a way to get the range of commits it is building
+* [*] In case of Declarative Jenkins Pipeline you need to disable auto checkout to get SCM information
+
+== icon:home[] Homework
+
+Currently `org.superbiz.CalculatorVerticle` only implements `sum` operation.
+Implement the `multiply` operation, and run Smart Testing with `affected` strategy.
+
+== Links
+
+Smart Testing:: https://github.com/arquillian/smart-testing
+Smart Testing Documentation:: http://arquillian.org/smart-testing
+Workshop:: https://github.com/lordofthejars/smart-testing-workshop
+Example:: https://github.com/lordofthejars/vertxcalculator
