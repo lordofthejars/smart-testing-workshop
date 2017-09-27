@@ -11,7 +11,8 @@
 :imagesdir: images
 :figure-caption!:
 :data-uri:
-:smart-testing-version: 0.0.1
+:smart-testing-version: 0.0.2
+:bash-installation: curl -sSL https://git.io/v5jy6 | bash
 
 *We know which tests you want to run.*
 
@@ -194,7 +195,7 @@ You've learnt:
 
 Smart Testing is a Maven extension, not a Maven plugin, and this means that using it is slightly different than registering a plugin.
 
-You can read all the details on how to do it at http://arquillian.org/smart-testing/#_maven_extension but the quick way of registering Smart Testing is just executing  `curl -sSL https://git.io/vdv4j | bash` on project root directory.
+You can read all the details on how to do it at http://arquillian.org/smart-testing/#_maven_extension but the quick way of registering Smart Testing is just executing  `{bash-installation}` on project root directory.
 
 Then you need to update/force the surefire version.
 For this case we are going to force to use the latest one `2.20`.
@@ -529,6 +530,109 @@ You've learnt:
 * [*] `affected` strategy uses _imports_ to get which tests to execute
 * [*] It scans transitivitly all imports by default (excluding `java` package)
 * [*] You can prune import graph by using _inclusions_, _exclusions_ or disabling it.
+
+=== `failed` strategy
+
+Sometimes when you are running tests, you notice that one test is failing.
+The fix is either trivial, so you only need to do an easy small modification on test to make it pass, or you just don't know exactly what is happening and you might want to just run this test from your build tool to check the cause of failure.
+
+Let's add a new test case on `org.superbiz.MatrixCalculatorTest` test.
+
+[source, java]
+.src/main/java/org/superbiz/MatrixCalculatorTest.java
+----
+@Test
+public void should_sum_two_matrix_with_zeros() {
+
+  // given
+  final Matrix a = Matrix.from2DArray(new double[][] {{0d, 0d}, {0d, 0d}});
+  final Matrix b = Matrix.from2DArray(new double[][] {{0d, 0d}, {0d, 0d}});
+  MatrixCalculator matrixCalculator = new MatrixCalculator();
+
+  // when
+  final Matrix sum = matrixCalculator.sum(a, b);
+
+  // then
+  final Matrix expectedSum = Matrix.from2DArray(new double[][] {{2d, 2d}, {2d, 2d}});
+  assertThat(sum).isEqualTo(expectedSum);
+}
+----
+
+And run the whole build:
+
+....
+mvn clean test
+....
+
+All tests are executed and at the end one failure is reported because of our new test case.
+Let's fix the test:
+
+[source, java]
+.src/main/java/org/superbiz/MatrixCalculatorTest.java
+----
+@Test
+public void should_sum_two_matrix_with_zeros() {
+
+  // given
+  final Matrix a = Matrix.from2DArray(new double[][] {{0d, 0d}, {0d, 0d}});
+  final Matrix b = Matrix.from2DArray(new double[][] {{0d, 0d}, {0d, 0d}});
+  MatrixCalculator matrixCalculator = new MatrixCalculator();
+
+  // when
+  final Matrix sum = matrixCalculator.sum(a, b);
+
+  // then
+  final Matrix expectedSum = Matrix.from2DArray(new double[][] {{2d, 2d}, {2d, 2d}});
+  assertThat(sum).isEqualTo(expectedSum);
+}
+----
+
+And then run the build enabling Smart Testing with `failed` strategy:
+
+....
+mvn clean test -Dsmart.testing="failed"
+....
+
+And the output is:
+
+.Output
+....
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running org.superbiz.MatrixCalculatorTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.109 s - in org.superbiz.MatrixCalculatorTest
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+....
+
+Finally let's commit all changes we have done:
+
+....
+git add .
+git commit -m "Fix matrix method"
+....
+
+==== Explanation of `failed` strategy
+
+`Failed` strategy just gets all tests that failed from previous executions and mark them as important tests to run first.
+This strategy uses the JUnit XML report for reading past executions.
+
+IMPORTANT: Currently `failed` strategy only works for local development.
+
+:numbered!:
+=== icon:check-square-o[] Check point
+:numbered:
+
+You've learnt:
+
+* [*] `failed` strategy is used to run tests that failed in previous run
 
 === `ordering` mode
 
